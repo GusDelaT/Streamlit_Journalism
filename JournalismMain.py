@@ -6,8 +6,8 @@ import base64
 from io import StringIO 
 
 
-GITHUB_TOKEN = "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"  
-REPO_NAME = "gusdelatorre/Streamlit_Journalism"
+GITHUB_TOKEN = os.getenv("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")
+REPO_NAME = "GusDelaT/Streamlit_Journalism"
 
 st.set_page_config(
     page_title="Formulario de Redacción",
@@ -73,7 +73,8 @@ def upload_to_github(local_file_path, repo_name, file_name, token):
     
     content_base64 = base64.b64encode(content).decode()
 
-    url = f"https://api.github.com/repos/gusdelatorre/{repo_name}/contents/{file_name}"
+    url = f"url = f"https://api.github.com/repos/GusDelaT/{repo_name}/contents/{file_name}"
+"
 
     headers = {
         "Authorization": f"token {token}",
