@@ -1,17 +1,8 @@
 import streamlit as st
 import pandas as pd
 import os
-import requests
 import base64
-from io import StringIO 
-
-# GitHub Token - Directly set here for ease
-GITHUB_TOKEN = "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"  
-REPO_NAME = "GusDelaT/Streamlit_Journalism"  
-BRANCH_NAME = "main"  
-
-# GitHub API URL
-GITHUB_API_URL = "https://api.github.com"
+from io import StringIO
 
 # Streamlit setup
 st.set_page_config(
@@ -32,7 +23,7 @@ sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRSKqRqiv_7LHJsO3rv
 # Fetch data
 df = fetch_data(sheet_url)
 
-# Convert DataFrame to CSV for uploading
+# Convert DataFrame to CSV for download
 def convert_df_to_csv(data):
     return data.to_csv(index=False).encode('utf-8')
 
@@ -69,59 +60,11 @@ if st.button("Refrescar Datos"):
     df = fetch_data(sheet_url)
     st.write("Refrescado exitosamente!")
 
-# GitHub upload function
-def upload_to_github(local_file_path, repo_name, file_name, token):
-    with open(local_file_path, "rb") as file:
-        content = file.read()
-    
-    content_base64 = base64.b64encode(content).decode()
-
-    # GitHub API URL for file contents
-    url = f"{GITHUB_API_URL}/repos/{repo_name}/contents/{file_name}"
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
-
-    # Check if file exists
-    response = requests.get(url, headers=headers)
-    sha = None
-    if response.status_code == 200:
-        sha = response.json().get('sha')
-
-    payload = {
-        "message": "Upload or update CSV file",
-        "content": content_base64,
-        "branch": BRANCH_NAME
-    }
-
-    # If file exists, include sha to update the file
-    if sha:
-        payload["sha"] = sha
-
-    # Make the PUT request to upload the file
-    response = requests.put(url, headers=headers, json=payload)
-
-    if response.status_code == 201:
-        st.success(f"File uploaded successfully to GitHub: {file_name}")
-    elif response.status_code == 200:
-        st.success(f"File updated successfully on GitHub: {file_name}")
-    else:
-        st.error(f"Failed to upload file to GitHub. Status Code: {response.status_code}")
-        st.error(f"Response: {response.json()}")
-
-# PDF Links (Example)
-pdf_links = {
-    "Periódico 1": "18tZvzD8Iv3w0U7iRfN_K9AH3jcwkVyYn",
-    "Periódico 2": "19Dfm62cx2DozMX04mH5UDjfCkXYcTa6b",
-    "Periódico 3": "1UbNMpX1tgpPDrLLKhoPjuO3Sktf9OPdI",
-}
-
 # Tabs for content
 st.title("Tus Datos + 15 Observaciones")
 tab1, tab2 = st.tabs(["Overview", "Filtrados"])
 
-# Tab 1: Overview with PDF Viewer
+# Tab 1: Overview
 with tab1:
     st.header("Overview")
     col1, col2 = st.columns([1.5, 1.5]) 
@@ -139,26 +82,61 @@ with tab1:
                 file_name = f"{nombre}_{puesto_laboral}.csv"
                 edited_df.to_csv(file_name, index=False)
                 
-                # Upload the file to GitHub
-                upload_to_github(file_name, REPO_NAME, file_name, GITHUB_TOKEN),
-                st.success("Cambios guardados y subidos a GitHub exitosamente.")
+                # Provide a download link for the user
+                csv_data = convert_df_to_csv(edited_df)
+                st.download_button(
+                    label="Download CSV File",
+                    data=csv_data,
+                    file_name=file_name,
+                    mime="text/csv"
+                )
+                
+                st.success("Cambios guardados y archivo CSV listo para descargar.")
             else:
                 st.error("Por favor ingrese tanto el nombre como el puesto laboral.")
 
+# Tab 2: Filtered Data
+with tab2:
+    st.header("Filtered Data")
+    st.dataframe(filtered_df)
+
+    csv_data = convert_df_to_csv(filtered_df)
+    st.download_button(
+        label="Download Filtered Data",
+        data=csv_data,
+        file_name="filtered_data.csv",
+        mime="text/csv"
+    )
+
+
     with col2:
         st.subheader("PDF Viewer")
+        pdf_links = {
+            "Periódico 1": "18tZvzD8Iv3w0U7iRfN_K9AH3jcwkVyYn",
+    "Periódico 2": "19Dfm62cx2DozMX04mH5UDjfCkXYcTa6b",
+    "Periódico 3": "1UbNMpX1tgpPDrLLKhoPjuO3Sktf9OPdI",
+    "Periódico 4": "1igQK6jP34Y7-vaAaQ4KCtjsb45rxSkBC",
+    "Periódico 5": "1SrOM1FwAoZfNeWEh9BJLCfbHhi9Fi-Zd",
+    "Periódico 6": "1hSx0HSXfJSwxZonPsggyumXJWwTtxQ-2",
+    "Periódico 7": "1VjTbJSbEGg_iT_IF88rJ_X5Aku-o0IOk",
+    "Periódico 8": "17a1kwFuGdl12LxB8q0X30wceciK1Kb_6",
+    "Periódico 9": "1KIRMS8up_xlmxGAGj3TaT1u9747qXaOc",
+    "Periódico 10": "1IaDnFBfMS9JT4ZeVQ0u5W8Ar2i9RPMnn",
+    "Periódico 11": "19VB1SnYROs1GMmKQECVskpu1iMbK7ejL",
+    "Periódico 12": "1Gs0xc6WqZCSpk6Gqk4qafOO6n4vmyROX",
+    "Periódico 13": "15i_uplyIGD7swONxaBkNB6X4cjYlj8Vj",
+    "Periódico 14": "1gnFNR5ySN_5EEFKq2C6ytlyzx7JUyIeW",
+    "Periódico 15": "1msU35-Pv3SpiFr2GPRJwutTXWRQHpmTL"
+        }
 
         selected_pdf = st.selectbox("Select a PDF to view:", list(pdf_links.keys()), key="pdf_select")
-
         if selected_pdf:
             file_id = pdf_links[selected_pdf]
             pdf_url = f"https://drive.google.com/file/d/{file_id}/preview"
-
             st.markdown(f'<iframe src="{pdf_url}" width="90%" height="800"></iframe>', unsafe_allow_html=True)
-
             st.success(f"Displaying: {selected_pdf}")
 
-# Tab 2: Filtros de data
+# Tab 2: Filtros de Data
 with tab2:
     st.header("Filtered Data")
     st.dataframe(filtered_df)
