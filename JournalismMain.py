@@ -73,7 +73,7 @@ def upload_to_github(local_file_path, repo_name, file_name, token):
     
     content_base64 = base64.b64encode(content).decode()
 
-    url = f"url = f"https://api.github.com/repos/GusDelaT/{repo_name}/contents/{file_name}"
+    url = f"https://api.github.com/repos/GusDelaT/{repo_name}/contents/{file_name}"
 "
 
     headers = {
