@@ -6,6 +6,9 @@ import base64
 from io import StringIO 
 from streamlit_gsheets import GSheetsConnection
 
+GITHUB_TOKEN = "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"  
+REPO_NAME = "gusdelatorre/Streamlit_Journalism"
+
 st.set_page_config(
     page_title="Formulario de Redacción",
     layout="wide"
@@ -19,6 +22,8 @@ def fetch_data(sheet_url: str):
         return pd.DataFrame()
 
 sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRSKqRqiv_7LHJsO3rvH8Cng9Nvr1hKmT143s3i9LUCTrZv0mCxU-3mDiS9bO4jhe3XbT-n9mgU78k_/pub?gid=0&single=true&output=csv"
+
+
 # Fetch
 df = fetch_data(sheet_url)
 
@@ -57,6 +62,10 @@ if st.button("Refrescar Datos"):
     df = fetch_data(sheet_url)
     st.write("Refrescado existosamente!")
 
+local_file_path = "/workspaces/Streamlit_Journalism"
+repo_name = REPO_NAME
+token = GITHUB_TOKEN
+
 # --- Subir los datos a GitHub** ---
 def upload_to_github(local_file_path, repo_name, file_name, token):
     with open(local_file_path, "rb") as file:
@@ -84,8 +93,7 @@ def upload_to_github(local_file_path, repo_name, file_name, token):
         st.error(f"Failed to upload file to GitHub. Status Code: {response.status_code}")
         st.error(response.json())
 
-GITHUB_TOKEN = "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"  
-REPO_NAME = "GusDelaT/Streamlit_Journalism"  
+  
 
 pdf_links = {
     "Periódico 1": "18tZvzD8Iv3w0U7iRfN_K9AH3jcwkVyYn",
@@ -126,7 +134,10 @@ with tab1:
                 file_name = f"{nombre}_{puesto_laboral}.csv"
                 edited_df.to_csv(file_name, index=False)
                 
-                upload_to_github(file_name, REPO_NAME, file_name, GITHUB_TOKEN)
+                upload_to_github(file_name, REPO_NAME, file_name, GITHUB_TOKEN),
+                with open(file_name, "rb") as file:
+                        content = file.read()
+
                 st.success("Cambios guardados y subidos a GitHub exitosamente.")
             else:
                 st.error("Por favor ingrese tanto el nombre como el puesto laboral.")
