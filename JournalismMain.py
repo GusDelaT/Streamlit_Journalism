@@ -4,7 +4,7 @@ import os
 import requests
 import base64
 from io import StringIO 
-from streamlit_gsheets import GSheetsConnection
+
 
 GITHUB_TOKEN = "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"  
 REPO_NAME = "gusdelatorre/Streamlit_Journalism"
