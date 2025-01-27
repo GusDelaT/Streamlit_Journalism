@@ -9,7 +9,6 @@ from io import StringIO
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 REPO_NAME = "GusDelaT/Streamlit_Journalism"
 
-
 st.set_page_config(
     page_title="Formulario de Redacción",
     layout="wide"
@@ -24,8 +23,7 @@ def fetch_data(sheet_url: str):
 
 sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRSKqRqiv_7LHJsO3rvH8Cng9Nvr1hKmT143s3i9LUCTrZv0mCxU-3mDiS9bO4jhe3XbT-n9mgU78k_/pub?gid=0&single=true&output=csv"
 
-
-# Fetch
+# Fetch data
 df = fetch_data(sheet_url)
 
 def convert_df_to_csv(data):
@@ -57,45 +55,55 @@ if not df.empty:
     for col in numeric_cols:
         min_val, max_val = df[col].min(), df[col].max()
         selected_range = st.sidebar.slider(f"Seleccionar {col}", min_val, max_val, (min_val, max_val))
-        filtered_df = filtered_df[(filtered_df[col] >= selected_range[0]) & (filtered_df[col] <= selected_range[0])]
+        filtered_df = filtered_df[(filtered_df[col] >= selected_range[0]) & (filtered_df[col] <= selected_range[1])]
 
 if st.button("Refrescar Datos"):
     df = fetch_data(sheet_url)
-    st.write("Refrescado existosamente!")
+    st.write("Refrescado exitosamente!")
 
 local_file_path = "/workspaces/Streamlit_Journalism"
-repo_name = REPO_NAME
+repo_name = "GusDelaT/Streamlit_Journalism"  # No need to edit this
 token = GITHUB_TOKEN
 
-# --- Subir los datos a GitHub** ---
+# --- Subir los datos a GitHub ---
 def upload_to_github(local_file_path, repo_name, file_name, token):
     with open(local_file_path, "rb") as file:
         content = file.read()
     
     content_base64 = base64.b64encode(content).decode()
 
-    url = f"https://api.github.com/repos/GusDelaT/Streamlit_Journalism/contents/myfile.csv"
-
+    # Check if the file already exists to handle updating
+    url = f"https://api.github.com/repos/{repo_name}/contents/{file_name}"
     headers = {
         "Authorization": f"token {token}",
         "Content-Type": "application/json",
     }
+
+    response = requests.get(url, headers=headers)
+    sha = None
+    if response.status_code == 200:
+        sha = response.json().get('sha')
+
     payload = {
-        "message": "Upload CSV file",
+        "message": "Upload or update CSV file",
         "content": content_base64,
-        "branch": "main"  
+        "branch": "main"
     }
+
+    if sha:  # If file exists, include sha to update the file
+        payload["sha"] = sha
 
     response = requests.put(url, headers=headers, json=payload)
 
     if response.status_code == 201:
         st.success(f"File uploaded successfully to GitHub: {file_name}")
+    elif response.status_code == 200:
+        st.success(f"File updated successfully on GitHub: {file_name}")
     else:
         st.error(f"Failed to upload file to GitHub. Status Code: {response.status_code}")
-        st.error(response.json())
+        st.error(f"Response: {response.json()}")
 
-  
-
+# PDF links
 pdf_links = {
     "Periódico 1": "18tZvzD8Iv3w0U7iRfN_K9AH3jcwkVyYn",
     "Periódico 2": "19Dfm62cx2DozMX04mH5UDjfCkXYcTa6b",
@@ -114,6 +122,7 @@ pdf_links = {
     "Periódico 15": "1msU35-Pv3SpiFr2GPRJwutTXWRQHpmTL"
 }
 
+# Tabs for content
 st.title("Tus Datos + 15 Observaciones")
 tab1, tab2 = st.tabs(["Overview", "Filtrados"])
 
@@ -135,7 +144,7 @@ with tab1:
                 file_name = f"{nombre}_{puesto_laboral}.csv"
                 edited_df.to_csv(file_name, index=False)
                 
-                upload_to_github(file_name, REPO_NAME, file_name, GITHUB_TOKEN),
+                upload_to_github(file_name, "GusDelaT/Streamlit_Journalism", file_name, GITHUB_TOKEN),
                 with open(file_name, "rb") as file:
                         content = file.read()
 
